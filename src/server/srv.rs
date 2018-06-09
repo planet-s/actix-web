@@ -11,6 +11,7 @@ use actix::{
 use futures::sync::mpsc;
 use futures::{Future, Sink, Stream};
 use mio;
+#[cfg(not(target_os = "redox"))]
 use net2::TcpBuilder;
 use num_cpus;
 use slab::Slab;
@@ -951,6 +952,7 @@ fn start_accept_thread(
     (readiness, tx)
 }
 
+#[cfg(not(target_os = "redox"))]
 fn create_tcp_listener(
     addr: net::SocketAddr, backlog: i32,
 ) -> io::Result<net::TcpListener> {
@@ -961,6 +963,12 @@ fn create_tcp_listener(
     builder.reuse_address(true)?;
     builder.bind(addr)?;
     Ok(builder.listen(backlog)?)
+}
+#[cfg(target_os = "redox")]
+fn create_tcp_listener(
+    addr: net::SocketAddr, _backlog: i32,
+) -> io::Result<net::TcpListener> {
+    net::TcpListener::bind(addr)
 }
 
 /// This function defines errors that are per-connection. Which basically
